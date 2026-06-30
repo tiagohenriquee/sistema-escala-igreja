@@ -305,7 +305,7 @@ export function MembersPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => openEditDialog(member)}>
+                  <DropdownMenuItem onSelect={() => setTimeout(() => openEditDialog(member), 0)}>
                     <Edit2 className="mr-2 h-4 w-4" />
                     Editar
                   </DropdownMenuItem>

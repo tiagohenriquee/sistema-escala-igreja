@@ -152,7 +152,7 @@ export function RolesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openEditDialog(role)}>
+                      <DropdownMenuItem onSelect={() => setTimeout(() => openEditDialog(role), 0)}>
                         <Edit2 className="mr-2 h-4 w-4" />
                         Editar
                       </DropdownMenuItem>

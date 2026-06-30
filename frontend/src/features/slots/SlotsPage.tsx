@@ -313,15 +313,15 @@ export function SlotsPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => openEditDialog(slot)}>
+                    <DropdownMenuItem onSelect={() => setTimeout(() => openEditDialog(slot), 0)}>
                       <Edit2 className="mr-2 h-4 w-4" />
                       Editar
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => toggleActive(slot)}>
+                    <DropdownMenuItem onSelect={() => toggleActive(slot)}>
                       {slot.is_active ? "Desativar" : "Ativar"}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setSlotToDelete(slot)}
+                      onSelect={() => setTimeout(() => setSlotToDelete(slot), 0)}
                       className="text-destructive focus:text-destructive"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
