@@ -7,17 +7,28 @@ import type {
   ScheduleSummary,
   WhatsappPreview,
 } from "../types";
+import { clearToken, getToken, setToken } from "../lib/auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = getToken();
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options?.headers ?? {}),
     },
     ...options,
   });
+
+  if (response.status === 401) {
+    clearToken();
+    if (window.location.pathname !== "/login") {
+      window.location.assign("/login");
+    }
+    throw new Error("Sessão expirada. Faça login novamente.");
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -32,6 +43,23 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  login: async (username: string, password: string) => {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    if (response.status === 401) {
+      throw new Error("Credenciais inválidas");
+    }
+    if (!response.ok) {
+      throw new Error("Erro ao comunicar com a API");
+    }
+    const { access_token } = (await response.json()) as { access_token: string };
+    setToken(access_token);
+    return access_token;
+  },
+
   listMembers: () => request<Member[]>("/members"),
   createMember: (payload: Partial<Member>) =>
     request<Member>("/members", {

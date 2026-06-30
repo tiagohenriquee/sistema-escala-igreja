@@ -21,7 +21,13 @@ class Schedule(Base, IdMixin):
 
     week_start_date: Mapped[date] = mapped_column(Date, nullable=False)
     status: Mapped[str] = mapped_column(
-        Enum(ScheduleStatus, name="schedule_status"),
+        Enum(
+            ScheduleStatus,
+            name="schedule_status",
+            # Store the enum *values* ("draft"/"approved"/"sent") instead of the
+            # default member names ("DRAFT"/...), matching the migration and the API/UI.
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+        ),
         nullable=False,
         default=ScheduleStatus.DRAFT,
     )

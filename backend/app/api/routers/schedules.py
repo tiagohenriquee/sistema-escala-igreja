@@ -18,7 +18,10 @@ router = APIRouter(prefix="/schedules", tags=["schedules"])
 @router.post("/generate", response_model=ScheduleOut, status_code=status.HTTP_201_CREATED)
 def generate_schedule(payload: ScheduleGenerateRequest, db: Session = Depends(get_db_session)):
     service = ScheduleService(db)
-    schedule = service.generate_schedule(payload.week_start_date)
+    try:
+        schedule = service.generate_schedule(payload.week_start_date)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     db.commit()
     db.refresh(schedule)
     schedule = service.get_schedule(schedule.id)
@@ -57,7 +60,10 @@ def update_schedule(schedule_id: int, payload: ScheduleUpdateRequest, db: Sessio
         )
         for item in payload.items
     ]
-    service.update_schedule_items(schedule, updates)
+    try:
+        service.update_schedule_items(schedule, updates)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     db.commit()
     schedule = service.get_schedule(schedule.id)
     return schedule

@@ -25,5 +25,5 @@ def test_format_whatsapp_message():
     assert "*ESCALA MÍDIA*" in message
     assert "Semana: 09/03 a 15/03" in message
     assert "📅 *Quarta-feira*" in message
-    assert "? Sonoplasta: Ana" in message
-    assert "? Videomaker: NÃO PREENCHIDO" in message
+    assert "• Sonoplasta: Ana" in message
+    assert "• Videomaker: NÃO PREENCHIDO" in message

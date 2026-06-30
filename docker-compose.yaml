@@ -4,20 +4,18 @@ services:
     container_name: escala-postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: escala
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-escala}
+    # The database is not published to the host: the backend reaches it over the
+    # compose network. For local DB access use the dev-profile Adminer console.
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7-alpine
-    container_name: escala-redis
-    restart: always
-    ports:
-      - "6379:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-escala}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   backend:
     build:
@@ -25,14 +23,16 @@ services:
     container_name: escala-backend
     restart: always
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/escala
-      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-escala}
       CORS_ORIGINS: '["http://localhost:5173","http://localhost:8080"]'
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
     ports:
       - "8000:8000"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
 
   frontend:
     build:
@@ -46,12 +46,14 @@ services:
     depends_on:
       - backend
 
+  # Dev-only DB console: `docker compose --profile dev up`
   adminer:
     image: adminer:4
     container_name: escala-adminer
     restart: always
+    profiles: ["dev"]
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     depends_on:
       - db
 

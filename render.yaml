@@ -1,0 +1,25 @@
+# Render Blueprint — backend FastAPI (Docker). The database lives on Neon (free).
+# Create the service via Render → "New +" → "Blueprint" and point it at this repo.
+services:
+  - type: web
+    name: escala-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    autoDeploy: true
+    envVars:
+      # Cole a connection string do Neon (use o prefixo postgresql+psycopg://)
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_USERNAME
+        value: admin
+      # Defina uma senha forte no painel do Render
+      - key: ADMIN_PASSWORD
+        sync: false
+      # Render gera um segredo aleatório automaticamente
+      - key: JWT_SECRET
+        generateValue: true
+      # Cole a URL pública do frontend na Vercel, ex.: ["https://escala.vercel.app"]
+      - key: CORS_ORIGINS
+        sync: false

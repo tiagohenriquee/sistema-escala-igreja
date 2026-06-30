@@ -326,11 +326,15 @@ export function EditSchedulePage() {
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="0">Não preenchido</SelectItem>
-                                    {activeMembers.map((member) => (
-                                      <SelectItem key={member.id} value={member.id.toString()}>
-                                        {member.name}
-                                      </SelectItem>
-                                    ))}
+                                    {activeMembers
+                                      .filter((member) =>
+                                        member.roles?.some((role) => role.id === item.role_id)
+                                      )
+                                      .map((member) => (
+                                        <SelectItem key={member.id} value={member.id.toString()}>
+                                          {member.name}
+                                        </SelectItem>
+                                      ))}
                                   </SelectContent>
                                 </Select>
                               </div>

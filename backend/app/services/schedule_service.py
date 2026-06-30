@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
@@ -18,6 +18,7 @@ from app.domain.whatsapp.types import WhatsappItem
 from app.models import (
     AssignmentHistory,
     Member,
+    MemberRole,
     Schedule,
     ScheduleItem,
     ScheduleStatus,
@@ -118,7 +119,14 @@ class ScheduleService:
             history=history,
         )
 
+    def get_by_week(self, week_start_date: date) -> Schedule | None:
+        stmt = select(Schedule).where(Schedule.week_start_date == week_start_date)
+        return self.db.scalars(stmt).first()
+
     def generate_schedule(self, week_start_date: date) -> Schedule:
+        if self.get_by_week(week_start_date) is not None:
+            raise ValueError(f"Já existe uma escala para a semana de {week_start_date.isoformat()}")
+
         schedule = Schedule(week_start_date=week_start_date, status=ScheduleStatus.DRAFT)
         self.repo.create(schedule)
 
@@ -137,8 +145,20 @@ class ScheduleService:
         self.repo.replace_items(schedule, items)
         return schedule
 
+    def _member_has_role(self, member_id: int, role_id: int) -> bool:
+        stmt = select(MemberRole).where(
+            MemberRole.member_id == member_id,
+            MemberRole.role_id == role_id,
+        )
+        return self.db.scalars(stmt).first() is not None
+
     def update_schedule_items(self, schedule: Schedule, updates: list[ScheduleItem]) -> Schedule:
         for update in updates:
+            # A member may only be assigned to a role they actually have.
+            if update.member_id is not None and not self._member_has_role(
+                update.member_id, update.role_id
+            ):
+                raise ValueError("Integrante não possui a função selecionada")
             if update.id is not None:
                 item = self.db.get(ScheduleItem, update.id)
             else:
@@ -158,8 +178,12 @@ class ScheduleService:
         return schedule
 
     def approve(self, schedule: Schedule) -> Schedule:
+        # Idempotent: approving an already-approved schedule must not duplicate history.
+        if schedule.status != ScheduleStatus.DRAFT:
+            return schedule
+
         schedule.status = ScheduleStatus.APPROVED
-        schedule.approved_at = datetime.utcnow()
+        schedule.approved_at = datetime.now(timezone.utc)
         self.db.add(schedule)
 
         for item in schedule.items:

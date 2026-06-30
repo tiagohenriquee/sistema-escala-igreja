@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import {
   Edit2,
+  Loader2,
   MoreHorizontal,
   Phone,
   Plus,
@@ -12,7 +13,7 @@ import {
 import { AppLayout } from "@/components/app-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -36,19 +37,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/services/api";
 import type { Member, Role } from "@/types";
 
+type MemberFormState = {
+  name: string;
+  phone: string;
+  notes: string;
+  is_active: boolean;
+  roleIds: number[];
+};
+
+const EMPTY_FORM: MemberFormState = {
+  name: "",
+  phone: "",
+  notes: "",
+  is_active: true,
+  roleIds: [],
+};
+
 export function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    notes: "",
-    is_active: true,
-    roleIds: [] as number[],
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<MemberFormState>(EMPTY_FORM);
 
   const loadData = () => {
     api.listMembers().then(setMembers).catch(() => setMembers([]));
@@ -63,6 +75,7 @@ export function MembersPage() {
   const filteredMembers = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return members;
+
     return members.filter(
       (member) =>
         member.name.toLowerCase().includes(term) ||
@@ -70,9 +83,21 @@ export function MembersPage() {
     );
   }, [members, searchTerm]);
 
-  const openNewDialog = () => {
+  const resetForm = () => {
     setEditingMember(null);
-    setFormData({ name: "", phone: "", notes: "", is_active: true, roleIds: [] });
+    setFormData(EMPTY_FORM);
+    setIsSubmitting(false);
+  };
+
+  const handleDialogChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      resetForm();
+    }
+  };
+
+  const openNewDialog = () => {
+    resetForm();
     setIsDialogOpen(true);
   };
 
@@ -98,28 +123,30 @@ export function MembersPage() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.name.trim()) return;
+    if (!formData.name.trim() || isSubmitting) return;
 
-    if (editingMember) {
-      await api.updateMember(editingMember.id, {
-        name: formData.name,
-        phone: formData.phone,
-        notes: formData.notes,
-        is_active: formData.is_active,
-      });
-      await api.replaceMemberRoles(editingMember.id, formData.roleIds);
-    } else {
-      const created = await api.createMember({
-        name: formData.name,
-        phone: formData.phone,
-        notes: formData.notes,
-        is_active: formData.is_active,
-      });
-      await api.replaceMemberRoles(created.id, formData.roleIds);
+    const payload = {
+      name: formData.name.trim(),
+      phone: formData.phone.trim(),
+      notes: formData.notes.trim(),
+      is_active: formData.is_active,
+    };
+
+    setIsSubmitting(true);
+    try {
+      if (editingMember) {
+        await api.updateMember(editingMember.id, payload);
+        await api.replaceMemberRoles(editingMember.id, formData.roleIds);
+      } else {
+        const created = await api.createMember(payload);
+        await api.replaceMemberRoles(created.id, formData.roleIds);
+      }
+
+      handleDialogChange(false);
+      loadData();
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsDialogOpen(false);
-    loadData();
   };
 
   const toggleActive = async (member: Member) => {
@@ -132,7 +159,7 @@ export function MembersPage() {
       title="Integrantes"
       description="Gerencie os membros da equipe de mídia"
       actions={
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
           <DialogTrigger asChild>
             <Button onClick={openNewDialog}>
               <Plus className="mr-2 h-4 w-4" />
@@ -141,9 +168,7 @@ export function MembersPage() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>
-                {editingMember ? "Editar Integrante" : "Novo Integrante"}
-              </DialogTitle>
+              <DialogTitle>{editingMember ? "Editar Integrante" : "Novo Integrante"}</DialogTitle>
               <DialogDescription>
                 {editingMember
                   ? "Atualize as informações do integrante."
@@ -194,7 +219,7 @@ export function MembersPage() {
                       />
                       <label
                         htmlFor={`role-${role.id}`}
-                        className="text-sm font-medium leading-none cursor-pointer"
+                        className="cursor-pointer text-sm font-medium leading-none"
                       >
                         {role.name}
                       </label>
@@ -217,11 +242,12 @@ export function MembersPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <Button variant="outline" onClick={() => handleDialogChange(false)} disabled={isSubmitting}>
                 Cancelar
               </Button>
-              <Button onClick={handleSubmit} disabled={!formData.name.trim()}>
-                {editingMember ? "Salvar" : "Adicionar"}
+              <Button onClick={handleSubmit} disabled={!formData.name.trim() || isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {editingMember ? "Salvar Alterações" : "Adicionar"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -229,11 +255,11 @@ export function MembersPage() {
       }
     >
       <div className="mb-6 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2 rounded-lg bg-card px-4 py-2 border border-border">
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2">
           <UserCheck className="h-4 w-4 text-success" />
           <span className="text-sm font-medium">{activeCount} ativos</span>
         </div>
-        <div className="flex items-center gap-2 rounded-lg bg-card px-4 py-2 border border-border">
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2">
           <UserX className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">{members.length - activeCount} inativos</span>
         </div>
@@ -256,10 +282,10 @@ export function MembersPage() {
           <Card key={member.id} className={!member.is_active ? "opacity-60" : ""}>
             <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">
                   {member.name
                     .split(" ")
-                    .map((n) => n[0])
+                    .map((part) => part[0])
                     .join("")
                     .slice(0, 2)
                     .toUpperCase()}
@@ -303,7 +329,7 @@ export function MembersPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   {member.is_active ? (
-                    <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
+                    <Badge variant="secondary" className="border-success/20 bg-success/10 text-success">
                       Ativo
                     </Badge>
                   ) : (
@@ -324,10 +350,33 @@ export function MembersPage() {
                 )}
 
                 {member.notes && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">{member.notes}</p>
+                  <p className="line-clamp-2 text-xs text-muted-foreground">{member.notes}</p>
                 )}
               </div>
             </CardContent>
+            <CardFooter className="justify-between gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => openEditDialog(member)}>
+                <Edit2 className="mr-2 h-4 w-4" />
+                Editar
+              </Button>
+              <Button
+                variant={member.is_active ? "secondary" : "default"}
+                className="flex-1"
+                onClick={() => toggleActive(member)}
+              >
+                {member.is_active ? (
+                  <>
+                    <UserX className="mr-2 h-4 w-4" />
+                    Desativar
+                  </>
+                ) : (
+                  <>
+                    <UserCheck className="mr-2 h-4 w-4" />
+                    Ativar
+                  </>
+                )}
+              </Button>
+            </CardFooter>
           </Card>
         ))}
       </div>

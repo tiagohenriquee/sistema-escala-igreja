@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
@@ -11,10 +11,12 @@ import {
   MessageCircle,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { clearToken } from "@/lib/auth";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -29,7 +31,13 @@ const navigation = [
 
 export function Sidebar() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+
+  function handleLogout() {
+    clearToken();
+    navigate("/login", { replace: true });
+  }
 
   return (
     <>
@@ -90,7 +98,15 @@ export function Sidebar() {
             })}
           </nav>
 
-          <div className="border-t border-sidebar-border p-4">
+          <div className="space-y-3 border-t border-sidebar-border p-4">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4" />
+              Sair
+            </Button>
             <div className="rounded-lg bg-sidebar-accent/50 px-4 py-3">
               <p className="text-xs font-medium text-muted-foreground">Versão 1.0</p>
               <p className="text-xs text-muted-foreground/70">Equipe de Mídia</p>

@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routers import availabilities, health, members, roles, schedules
+from app.api.deps import require_auth
+from app.api.routers import auth, availabilities, health, members, roles, schedules
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 
@@ -18,8 +19,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Public routers
 app.include_router(health.router)
-app.include_router(members.router)
-app.include_router(roles.router)
-app.include_router(availabilities.router)
-app.include_router(schedules.router)
+app.include_router(auth.router)
+
+# Protected routers — require a valid bearer token
+protected = [Depends(require_auth)]
+app.include_router(members.router, dependencies=protected)
+app.include_router(roles.router, dependencies=protected)
+app.include_router(availabilities.router, dependencies=protected)
+app.include_router(schedules.router, dependencies=protected)

@@ -4,6 +4,7 @@ __pycache__/
 *.pyo
 *.pyd
 *.sqlite
+*.db
 .pytest_cache/
 .venv/
 .env
@@ -23,3 +24,6 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Design reference (not part of the app)
+_zip_ref/

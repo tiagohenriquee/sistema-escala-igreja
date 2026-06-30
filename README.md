@@ -5,19 +5,25 @@ Sistema de escala semanal para equipes de mídia/apoio da igreja. Gera escalas a
 ## Stack
 - FastAPI + SQLAlchemy + PostgreSQL + Alembic
 - React + Vite + TypeScript
-- Docker + Redis
+- Docker
+
+## Configuração
+
+Copie `backend/.env.example` para `backend/.env` e **altere as credenciais de admin e o `JWT_SECRET`** antes de subir em produção. A API exige login (JWT) em todos os endpoints de dados.
 
 ## Quickstart (Docker)
 ```bash
 docker compose up --build -d
-
-docker exec -it escala-backend python -m app.db.init_db
-docker exec -it escala-backend python -m app.db.seed
 ```
+O backend aplica as migrations e popula os dados base automaticamente no boot.
 
 Acessos:
 - Frontend: http://localhost:5173
 - API: http://localhost:8000
+- Adminer (console do DB, somente dev): `docker compose --profile dev up -d adminer` → http://localhost:8080
+
+## Deploy gratuito (Vercel + Render + Neon)
+Passo a passo completo em [DEPLOY.md](DEPLOY.md).
 
 ## Local (sem Docker)
 
@@ -33,7 +39,7 @@ python -m venv .venv
 pip install -r requirements.txt
 
 # Configure .env (use backend/.env.example)
-python -m app.db.init_db
+alembic upgrade head
 python -m app.db.seed
 uvicorn app.main:app --reload --port 8000
 ```
