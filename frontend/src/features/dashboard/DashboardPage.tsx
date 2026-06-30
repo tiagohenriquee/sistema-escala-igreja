@@ -16,20 +16,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/services/api";
-import type { Member, Role, Schedule, ScheduleSummary } from "@/types";
-import { SLOT_LIST } from "@/lib/types";
+import type { Member, Role, Schedule, ScheduleSummary, Slot } from "@/types";
 
 export function DashboardPage() {
   const [schedules, setSchedules] = useState<ScheduleSummary[]>([]);
   const [nextSchedule, setNextSchedule] = useState<Schedule | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [slots, setSlots] = useState<Slot[]>([]);
 
   useEffect(() => {
     api.listSchedules().then(setSchedules).catch(() => setSchedules([]));
     api.listMembers().then(setMembers).catch(() => setMembers([]));
     api.listRoles().then(setRoles).catch(() => setRoles([]));
+    api.listSlots().then(setSlots).catch(() => setSlots([]));
   }, []);
+
+  const activeSlots = useMemo(() => slots.filter((slot) => slot.is_active), [slots]);
 
   useEffect(() => {
     if (schedules.length === 0) {
@@ -143,13 +146,13 @@ export function DashboardPage() {
               <div className="space-y-4">
                 <div className="rounded-lg border border-border bg-muted/30 p-4">
                   <div className="grid gap-3">
-                    {SLOT_LIST.slice(0, 3).map((slot) => {
+                    {activeSlots.slice(0, 3).map((slot) => {
                       const slotItems = nextSchedule.items.filter(
                         (item) => item.slot_id === slot.id
                       );
                       return (
                         <div key={slot.id} className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-foreground">{slot.name}</span>
+                          <span className="text-sm font-medium text-foreground">{slot.label}</span>
                           <span className="text-sm text-muted-foreground">
                             {slotItems.length} {slotItems.length === 1 ? "pessoa" : "pessoas"} escaladas
                           </span>

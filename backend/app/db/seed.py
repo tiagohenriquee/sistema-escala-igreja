@@ -1,3 +1,4 @@
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
@@ -51,6 +52,26 @@ def seed(db: Session) -> None:
         if (slot_id, role_id) not in existing:
             db.add(SlotRole(slot_id=slot_id, role_id=role_id, order=order))
 
+    db.commit()
+    _resync_sequences(db)
+
+
+def _resync_sequences(db: Session) -> None:
+    """Advance auto-increment sequences past the rows seeded with explicit IDs.
+
+    Inserting explicit primary keys (roles/slots) does not bump the Postgres
+    sequence, so the first app-created row would collide on id=1.
+    """
+    if db.bind is None or db.bind.dialect.name != "postgresql":
+        return
+    for table in ("roles", "service_slots"):
+        db.execute(
+            text(
+                f"SELECT setval(pg_get_serial_sequence('{table}', 'id'), "
+                f"COALESCE((SELECT MAX(id) FROM {table}), 1), "
+                f"(SELECT MAX(id) IS NOT NULL FROM {table}))"
+            )
+        )
     db.commit()
 
 

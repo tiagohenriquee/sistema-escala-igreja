@@ -13,19 +13,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { SLOT_LIST } from "@/lib/types";
 import { api } from "@/services/api";
-import type { Availability, AvailabilityUpsert, Member } from "@/types";
+import type { Availability, AvailabilityUpsert, Member, Slot } from "@/types";
 
 export function AvailabilityPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
+  const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     api.listMembers().then(setMembers).catch(() => setMembers([]));
     api.listAvailabilities().then(setAvailabilities).catch(() => setAvailabilities([]));
+    api.listSlots().then(setSlots).catch(() => setSlots([]));
   }, []);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export function AvailabilityPage() {
   }, [selectedMemberId]);
 
   const activeMembers = useMemo(() => members.filter((member) => member.is_active), [members]);
+  const activeSlots = useMemo(() => slots.filter((slot) => slot.is_active), [slots]);
 
   const selectedMember = activeMembers.find((member) => member.id === Number(selectedMemberId));
 
@@ -76,7 +78,7 @@ export function AvailabilityPage() {
     if (!selectedMemberId) return;
 
     const memberId = Number(selectedMemberId);
-    const items: AvailabilityUpsert[] = SLOT_LIST.map((slot) => {
+    const items: AvailabilityUpsert[] = activeSlots.map((slot) => {
       const existing = availabilities.find(
         (availability) => availability.member_id === memberId && availability.slot_id === slot.id
       );
@@ -90,7 +92,7 @@ export function AvailabilityPage() {
     setHasChanges(false);
   };
 
-  const summary = SLOT_LIST.map((slot) => {
+  const summary = activeSlots.map((slot) => {
     const available = activeMembers.filter((member) => {
       const availability = availabilities.find(
         (item) => item.member_id === member.id && item.slot_id === slot.id
@@ -121,7 +123,7 @@ export function AvailabilityPage() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">{slot.name}</p>
+                    <p className="text-sm font-medium text-muted-foreground">{slot.label}</p>
                     <p className="mt-1 text-2xl font-bold text-foreground">{count}</p>
                     <p className="text-xs text-muted-foreground">
                       {count === 1 ? "pessoa disponível" : "pessoas disponíveis"}
@@ -185,7 +187,7 @@ export function AvailabilityPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-2">
-              {SLOT_LIST.map((slot) => {
+              {activeSlots.map((slot) => {
                 const availability = getAvailability(slot.id);
                 const isAvailable = availability?.is_available ?? false;
 
@@ -215,7 +217,7 @@ export function AvailabilityPage() {
                         />
                       </div>
                       <div className="text-left">
-                        <p className="font-medium text-foreground">{slot.name}</p>
+                        <p className="font-medium text-foreground">{slot.label}</p>
                         <p className="text-sm text-muted-foreground">
                           {isAvailable ? "Disponível" : "Indisponível"}
                         </p>
@@ -241,7 +243,7 @@ export function AvailabilityPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  SLOT_LIST.forEach((slot) => {
+                  activeSlots.forEach((slot) => {
                     const availability = getAvailability(slot.id);
                     if (!availability?.is_available) {
                       toggleAvailability(slot.id);
@@ -255,7 +257,7 @@ export function AvailabilityPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  SLOT_LIST.forEach((slot) => {
+                  activeSlots.forEach((slot) => {
                     const availability = getAvailability(slot.id);
                     if (availability?.is_available) {
                       toggleAvailability(slot.id);

@@ -14,9 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { SLOT_LIST } from "@/lib/types";
 import { api } from "@/services/api";
-import type { Member, Role, Schedule, ScheduleSummary } from "@/types";
+import type { Member, Role, Schedule, ScheduleSummary, Slot } from "@/types";
 
 export function WhatsappPreviewPage() {
   const [searchParams] = useSearchParams();
@@ -28,6 +27,7 @@ export function WhatsappPreviewPage() {
   const [schedules, setSchedules] = useState<ScheduleSummary[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [slots, setSlots] = useState<Slot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -35,7 +35,16 @@ export function WhatsappPreviewPage() {
     api.listSchedules().then(setSchedules).catch(() => setSchedules([]));
     api.listMembers().then(setMembers).catch(() => setMembers([]));
     api.listRoles().then(setRoles).catch(() => setRoles([]));
+    api.listSlots().then(setSlots).catch(() => setSlots([]));
   }, []);
+
+  const visibleSlots = useMemo(
+    () =>
+      slots.filter(
+        (slot) => slot.is_active || (schedule?.items.some((item) => item.slot_id === slot.id) ?? false)
+      ),
+    [slots, schedule]
+  );
 
   useEffect(() => {
     if (scheduleIdParam) {
@@ -193,13 +202,13 @@ export function WhatsappPreviewPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {SLOT_LIST.map((slot) => {
+                {visibleSlots.map((slot) => {
                   const slotItems = schedule.items.filter((item) => item.slot_id === slot.id);
                   if (slotItems.length === 0) return null;
 
                   return (
                     <div key={slot.id} className="rounded-lg border border-border p-3">
-                      <h4 className="font-medium text-sm mb-2">{slot.name}</h4>
+                      <h4 className="font-medium text-sm mb-2">{slot.label}</h4>
                       <div className="space-y-1">
                         {slotItems.map((item) => {
                           const roleName = rolesById.get(item.role_id) ?? "Função";

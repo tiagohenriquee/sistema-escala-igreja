@@ -8,6 +8,7 @@ import { GenerateSchedulePage } from "../features/schedules/GenerateSchedulePage
 import { EditSchedulePage } from "../features/schedules/EditSchedulePage";
 import { WhatsappPreviewPage } from "../features/schedules/WhatsappPreviewPage";
 import { HistoryPage } from "../features/history/HistoryPage";
+import { SlotsPage } from "../features/slots/SlotsPage";
 import { LoginPage } from "../features/auth/LoginPage";
 import { ProtectedRoute } from "../components/protected-route";
 
@@ -18,6 +19,7 @@ export const router = createBrowserRouter([
   { path: "/", element: guarded(<DashboardPage />) },
   { path: "/integrantes", element: guarded(<MembersPage />) },
   { path: "/funcoes", element: guarded(<RolesPage />) },
+  { path: "/dias", element: guarded(<SlotsPage />) },
   { path: "/disponibilidade", element: guarded(<AvailabilityPage />) },
   { path: "/escala/gerar", element: guarded(<GenerateSchedulePage />) },
   { path: "/escala/editar", element: guarded(<EditSchedulePage />) },

@@ -34,9 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SLOT_LIST } from "@/lib/types";
 import { api } from "@/services/api";
-import type { Member, Role, Schedule, ScheduleItem, ScheduleSummary } from "@/types";
+import type { Member, Role, Schedule, ScheduleItem, ScheduleSummary, Slot } from "@/types";
 
 export function EditSchedulePage() {
   const [searchParams] = useSearchParams();
@@ -48,6 +47,7 @@ export function EditSchedulePage() {
   const [schedules, setSchedules] = useState<ScheduleSummary[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [slots, setSlots] = useState<Slot[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -55,6 +55,7 @@ export function EditSchedulePage() {
   useEffect(() => {
     api.listRoles().then(setRoles).catch(() => setRoles([]));
     api.listMembers().then(setMembers).catch(() => setMembers([]));
+    api.listSlots().then(setSlots).catch(() => setSlots([]));
     api.listSchedules().then(setSchedules).catch(() => setSchedules([]));
   }, []);
 
@@ -65,6 +66,13 @@ export function EditSchedulePage() {
   }, [scheduleIdParam]);
 
   const activeMembers = useMemo(() => members.filter((member) => member.is_active), [members]);
+  const visibleSlots = useMemo(
+    () =>
+      slots.filter(
+        (slot) => slot.is_active || (schedule?.items.some((item) => item.slot_id === slot.id) ?? false)
+      ),
+    [slots, schedule]
+  );
 
   const loadSchedule = async (id: string) => {
     setIsLoading(true);
@@ -279,13 +287,13 @@ export function EditSchedulePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {SLOT_LIST.map((slot) => {
+              {visibleSlots.map((slot) => {
                 const slotItems = schedule.items.filter((item) => item.slot_id === slot.id);
 
                 return (
                   <div key={slot.id} className="rounded-lg border border-border">
                     <div className="border-b border-border bg-muted/30 px-4 py-3">
-                      <h4 className="font-semibold text-foreground">{slot.name}</h4>
+                      <h4 className="font-semibold text-foreground">{slot.label}</h4>
                     </div>
                     <div className="p-4">
                       {slotItems.length > 0 ? (

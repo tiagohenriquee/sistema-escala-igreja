@@ -8,27 +8,6 @@ from app.domain.whatsapp.types import WhatsappItem
 UNFILLED_LABEL = "NÃO PREENCHIDO"
 SEPARATOR = "".join(["━" for _ in range(16)])
 
-SLOT_ORDER = [
-    "WEDNESDAY",
-    "SUNDAY_EBD",
-    "SUNDAY_FIRST_SERVICE",
-    "SUNDAY_SECOND_SERVICE",
-]
-
-SLOT_LABELS = {
-    "WEDNESDAY": "Quarta-feira",
-    "SUNDAY_EBD": "Domingo / EBD",
-    "SUNDAY_FIRST_SERVICE": "Domingo / 1º Culto",
-    "SUNDAY_SECOND_SERVICE": "Domingo / 2º Culto",
-}
-
-ROLE_ORDER = {
-    "Sonoplasta": 1,
-    "Videomaker": 2,
-    "Storymaker": 3,
-    "Fotos": 4,
-}
-
 
 def _format_week_range(week_start_date: date) -> str:
     start = week_start_date
@@ -38,8 +17,11 @@ def _format_week_range(week_start_date: date) -> str:
 
 def format_whatsapp_message(week_start_date: date, items: list[WhatsappItem]) -> str:
     grouped: dict[str, list[WhatsappItem]] = defaultdict(list)
+    slot_meta: dict[str, tuple[int, str]] = {}
     for item in items:
         grouped[item.slot_code].append(item)
+        # Last write wins; all items of a slot carry the same order/label.
+        slot_meta[item.slot_code] = (item.slot_order, item.slot_label)
 
     lines: list[str] = []
     lines.append("*ESCALA MÍDIA*")
@@ -47,14 +29,12 @@ def format_whatsapp_message(week_start_date: date, items: list[WhatsappItem]) ->
     lines.append(SEPARATOR)
     lines.append("")
 
-    for slot_code in SLOT_ORDER:
-        slot_items = grouped.get(slot_code, [])
-        if not slot_items:
-            continue
-
-        label = SLOT_LABELS.get(slot_code, slot_items[0].slot_label)
+    ordered_codes = sorted(grouped, key=lambda code: (slot_meta[code][0], slot_meta[code][1]))
+    for slot_code in ordered_codes:
+        slot_items = grouped[slot_code]
+        label = slot_meta[slot_code][1]
         lines.append(f"📅 *{label}*")
-        for item in sorted(slot_items, key=lambda i: ROLE_ORDER.get(i.role_name, 99)):
+        for item in sorted(slot_items, key=lambda i: (i.role_order, i.role_name)):
             member_name = item.member_name or UNFILLED_LABEL
             lines.append(f"   • {item.role_name}: {member_name}")
         lines.append("")

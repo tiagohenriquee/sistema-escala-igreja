@@ -2,7 +2,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.deps import require_auth
-from app.api.routers import auth, availabilities, health, members, roles, schedules
+from app.api.routers import auth, availabilities, health, members, roles, schedules, slots
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 
@@ -27,5 +27,6 @@ app.include_router(auth.router)
 protected = [Depends(require_auth)]
 app.include_router(members.router, dependencies=protected)
 app.include_router(roles.router, dependencies=protected)
+app.include_router(slots.router, dependencies=protected)
 app.include_router(availabilities.router, dependencies=protected)
 app.include_router(schedules.router, dependencies=protected)

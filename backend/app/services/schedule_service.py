@@ -209,12 +209,17 @@ class ScheduleService:
         for item in schedule.items:
             if item.slot is None or item.role is None:
                 continue
+            role_order = next(
+                (sr.order for sr in item.slot.roles if sr.role_id == item.role_id), 0
+            )
             items.append(
                 WhatsappItem(
                     slot_code=item.slot.code,
                     slot_label=item.slot.label,
                     role_name=item.role.name,
                     member_name=item.member.name if item.member else None,
+                    slot_order=item.slot.order,
+                    role_order=role_order,
                 )
             )
         return format_whatsapp_message(schedule.week_start_date, items)

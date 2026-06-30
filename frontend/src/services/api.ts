@@ -5,6 +5,8 @@ import type {
   Role,
   Schedule,
   ScheduleSummary,
+  Slot,
+  SlotPayload,
   WhatsappPreview,
 } from "../types";
 import { clearToken, getToken, setToken } from "../lib/auth";
@@ -92,6 +94,20 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
+
+  listSlots: () => request<Slot[]>("/slots"),
+  createSlot: (payload: SlotPayload) =>
+    request<Slot>("/slots", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateSlot: (id: number, payload: Partial<SlotPayload>) =>
+    request<Slot>(`/slots/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  deleteSlot: (id: number) =>
+    request<void>(`/slots/${id}`, { method: "DELETE" }),
 
   listAvailabilities: () => request<Availability[]>("/availabilities"),
   upsertAvailabilities: (memberId: number, items: AvailabilityUpsert[]) =>
