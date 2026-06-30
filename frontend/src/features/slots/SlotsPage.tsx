@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -313,13 +313,6 @@ export function SlotsPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => setTimeout(() => openEditDialog(slot), 0)}>
-                      <Edit2 className="mr-2 h-4 w-4" />
-                      Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => toggleActive(slot)}>
-                      {slot.is_active ? "Desativar" : "Ativar"}
-                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onSelect={() => setTimeout(() => setSlotToDelete(slot), 0)}
                       className="text-destructive focus:text-destructive"
@@ -354,6 +347,19 @@ export function SlotsPage() {
                 )}
               </div>
             </CardContent>
+            <CardFooter className="gap-2 p-4 pt-0">
+              <Button variant="outline" className="flex-1" onClick={() => openEditDialog(slot)}>
+                <Edit2 className="mr-2 h-4 w-4" />
+                Editar
+              </Button>
+              <Button
+                variant={slot.is_active ? "secondary" : "default"}
+                className="flex-1"
+                onClick={() => toggleActive(slot)}
+              >
+                {slot.is_active ? "Desativar" : "Ativar"}
+              </Button>
+            </CardFooter>
           </Card>
         ))}
       </div>
