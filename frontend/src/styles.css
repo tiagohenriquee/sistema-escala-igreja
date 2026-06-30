@@ -131,3 +131,37 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 }
+
+/* Decorative animations (used on the login screen) */
+@keyframes float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(16px, -24px) scale(1.08);
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-22px, 20px) scale(1.05);
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 9s ease-in-out infinite;
+  }
+  .animate-float-slow {
+    animation: float-slow 13s ease-in-out infinite;
+  }
+  .bg-grid {
+    background-image: radial-gradient(circle, var(--color-border) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+}
