@@ -306,7 +306,7 @@ export function SlotsPage() {
                     <p className="text-sm text-muted-foreground">{weekdayLabel(slot.day_of_week)}</p>
                   </div>
                 </div>
-                <DropdownMenu>
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                       <MoreHorizontal className="h-4 w-4" />
