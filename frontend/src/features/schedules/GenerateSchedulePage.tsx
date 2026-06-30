@@ -218,7 +218,7 @@ export function GenerateSchedulePage() {
               })}
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <Button variant="outline" onClick={handleRegenerate}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Regenerar

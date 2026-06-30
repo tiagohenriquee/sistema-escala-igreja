@@ -151,8 +151,8 @@ export function AvailabilityPage() {
           <CardTitle className="text-lg">Selecionar Integrante</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
-            <div className="flex-1 max-w-md">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="w-full sm:flex-1 sm:max-w-md">
               <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Escolha um integrante..." />

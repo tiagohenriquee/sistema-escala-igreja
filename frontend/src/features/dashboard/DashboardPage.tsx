@@ -159,7 +159,7 @@ export function DashboardPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <Link to={`/escala/editar?id=${nextSchedule.id}`} className="flex-1">
                     <Button variant="outline" className="w-full">
                       Editar Escala
